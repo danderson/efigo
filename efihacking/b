@@ -23,7 +23,7 @@ EOF
     ;;
     bin)
         rm -f helloworld helloworld.dump
-        GOROOT=`pwd`/.. GOPATH=`pwd` PATH=`pwd`/../bin:$PATH GOOS=uefi GOARCH=amd64 go build -v -ldflags '-H uefi' helloworld
+        GOROOT=`pwd`/.. GOPATH=`pwd` PATH=`pwd`/../bin:$PATH GOOS=uefi GOARCH=amd64 go build -v -ldflags '-H uefi -v' -x helloworld
         objdump -xD helloworld >helloworld.dump
         guestfish <<EOF
 add uefi.img
@@ -33,10 +33,7 @@ upload helloworld /EFI/BOOT/BOOTX64.EFI
 EOF
     ;;
     qemu)
-        qemu-system-x86_64 -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
-    ;;
-    qemu-dbg)
-        qemu-system-x86_64 -s -S -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
+        qemu-system-x86_64 -s -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
     ;;
     *)
         cat <<EOF

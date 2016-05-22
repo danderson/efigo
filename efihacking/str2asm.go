@@ -30,9 +30,14 @@ func main() {
 }
 
 func str2asm(n, v string) {
+	extra := 0
 	for i, r := range v {
-		fmt.Printf("DATA %s+0x%x(SB)/2, 0x%04x\n", n, i*2, r)
+		fmt.Printf("DATA %s+0x%x(SB)/2, $0x%04x\n", n, (i+extra)*2, r)
+		if r == '\n' {
+			extra++
+			fmt.Printf("DATA %s+0x%x(SB)/2, $0x%04x\n", n, (i+extra)*2, '\r')
+		}
 	}
-	fmt.Printf("DATA %s+0x%x(SB)/2, 0\n", n, len(v)*2)
-	fmt.Printf("GLOBL %s(SB),NOPTR,$%d\n", n, len(v)*2+2)
+	fmt.Printf("DATA %s+0x%x(SB)/2, $0\n", n, (len(v)+extra)*2)
+	fmt.Printf("GLOBL %s(SB),NOPTR,$%d\n", n, (len(v)+extra)*2+2)
 }
