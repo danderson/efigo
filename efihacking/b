@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -e
+
+case $1 in
+    toolchain)
+        (
+            cd ../src
+            GOOS=uefi GOROOT_BOOTSTRAP=$(go env GOROOT) ./make.bash
+        )
+    ;;
+    diskimg)
+        guestfish <<EOF
+sparse uefi.img 10M
+run
+part-disk /dev/sda efi
+part-set-gpt-type /dev/sda 1 C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+mkfs vfat /dev/sda1
+mount /dev/sda1 /
+mkdir /EFI
+mkdir /EFI/BOOT
+EOF
+    ;;
+    bin)
+        rm -f helloworld helloworld.dump
+        GOROOT=`pwd`/.. GOPATH=`pwd` PATH=`pwd`/../bin:$PATH GOOS=uefi GOARCH=amd64 go build -v -ldflags '-H uefi' helloworld
+        objdump -xD helloworld >helloworld.dump
+        guestfish <<EOF
+add uefi.img
+run
+mount /dev/sda1 /
+upload helloworld /EFI/BOOT/BOOTX64.EFI
+EOF
+    ;;
+    qemu)
+        qemu-system-x86_64 -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
+    ;;
+    qemu-dbg)
+        qemu-system-x86_64 -s -S -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
+    ;;
+    *)
+        cat <<EOF
+Commands:
+ toolchain - compile gc for UEFI
+ diskimg - create the uefi.img disk
+ bin - compile helloworld EFI binary and add it to uefi.img
+ qemu - launch qemu with uefi.img
+ qemu-dbg - lauch qemu with gdb hooked up
+EOF
+        exit 1
+esac
