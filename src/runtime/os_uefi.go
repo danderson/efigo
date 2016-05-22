@@ -139,9 +139,3 @@ func sigignore(sig uint32) {
 func osinit() {
 	ncpu = 1
 }
-
-//go:nosplit
-func iamhere()
-
-//go:nosplit
-func iamhang()

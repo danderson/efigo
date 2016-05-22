@@ -1,12 +1,14 @@
 #include "textflag.h"
 
-#define HANG CALL runtime·iamhang(SB)
-
 TEXT _rt0_amd64_uefi(SB),NOSPLIT,$-8
-    MOVQ CX, _efi_image_handle(SB)
-    MOVQ DX, _efi_services(SB)
+    // Print the OK text to prove we made it here.
+    MOVQ 64(DX), CX // ConOut
+    MOVQ 8(CX), BX
+    MOVQ $oktext<>(SB), DX
+    CALL BX
 
-    HANG
+hang:
+    JMP hang
 
   	LEAQ	8(SP), SI // argv
 	MOVQ	0(SP), DI // argc
@@ -42,10 +44,6 @@ TEXT runtime·settls(SB),NOSPLIT,$0
 	RET
 
 TEXT runtime·exit(SB),NOSPLIT,$0-4
-    MOVQ    $_efi_services(SB), BX
-	MOVQ	88(BX), BX // BootServices
-    MOVQ    24+192(BX), AX // Exit
-    
 	RET
 
 TEXT runtime·nanotime(SB),NOSPLIT,$0-8
@@ -60,23 +58,7 @@ TEXT runtime·write(SB),NOSPLIT,$0-20
 TEXT runtime·usleep(SB),NOSPLIT,$0
  	RET
 
-GLOBL _efi_image_handle(SB),NOPTR,$8
-GLOBL _efi_services(SB),NOPTR,$8
-
-DATA oktext<>+0x00(SB)/4, $0x004b004f
-DATA oktext<>+0x04(SB)/4, $0x00000000
-GLOBL oktext<>(SB),NOPTR,$8
-
-TEXT runtime·iamhere(SB),NOSPLIT,$0
-    MOVQ _efi_services(SB), AX
-    MOVQ 64(AX), CX // ConOut
-    MOVQ 8(CX), AX
-    MOVQ $oktext<>(SB), DX
-    CALL AX
-    RET
-
-TEXT runtime·iamhang(SB),NOSPLIT,$0
-    CALL runtime·iamhere(SB)
-    CALL runtime·iamhere(SB)
-j:
-    JMP j
+DATA oktext<>+0x0(SB)/2, $0x004f
+DATA oktext<>+0x2(SB)/2, $0x004b
+DATA oktext<>+0x4(SB)/2, $0
+GLOBL oktext<>(SB),NOPTR,$6
