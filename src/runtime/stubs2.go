@@ -16,6 +16,7 @@ func closefd(fd int32) int32
 
 func exit(code int32)
 func nanotime() int64
+
 func usleep(usec uint32)
 
 func munmap(addr unsafe.Pointer, n uintptr)

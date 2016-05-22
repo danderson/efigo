@@ -148,6 +148,7 @@ const (
 	IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR = 14
 	IMAGE_SUBSYSTEM_WINDOWS_GUI          = 2
 	IMAGE_SUBSYSTEM_WINDOWS_CUI          = 3
+	IMAGE_SUBSYSTEM_EFI_APPLICATON       = 10
 )
 
 // X64
@@ -1245,12 +1246,18 @@ func Asmbpe() {
 	oh.SizeOfImage = uint32(nextsectoff)
 	oh64.SizeOfHeaders = uint32(PEFILEHEADR)
 	oh.SizeOfHeaders = uint32(PEFILEHEADR)
-	if headstring == "windowsgui" {
+	switch headstring {
+	case "windowsgui":
 		oh64.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI
 		oh.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI
-	} else {
+	case "windows":
 		oh64.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI
 		oh.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI
+	case "uefi":
+		oh64.Subsystem = IMAGE_SUBSYSTEM_EFI_APPLICATON
+		oh.Subsystem = IMAGE_SUBSYSTEM_EFI_APPLICATON
+	default:
+		panic(headstring)
 	}
 
 	// Disable stack growth as we don't want Windows to
