@@ -34,7 +34,10 @@ EOF
     ;;
     qemu)
         qemu-system-x86_64 -s -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
-    ;;
+        ;;
+    db)
+        gdb --command=gdb-cmds
+        ;;
     *)
         cat <<EOF
 Commands:

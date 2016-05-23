@@ -1,0 +1,18 @@
+set architecture i386:x86-64:intel
+layout reg
+focus cmd
+set confirm off
+define z
+  if (((unsigned short*)$pc)[0] == 0xfeeb)
+    set $pc = $pc + 2
+  else
+    print "Not touching $PC, not at a hang instruction"
+  end
+end
+
+define hook-stop
+x/8xg $rsp
+end
+
+target remote localhost:1234
+z
