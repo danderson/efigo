@@ -313,7 +313,7 @@ func (mode *BuildMode) Set(s string) error {
 		*mode = BuildmodeExe
 	case "pie":
 		switch goos {
-		case "android", "linux":
+		case "android", "linux", "uefi":
 		default:
 			return badmode()
 		}
@@ -963,7 +963,7 @@ func hostlinksetup() {
 			log.Fatal(err)
 		}
 		tmpdir = dir
-		AtExit(rmtemp)
+		//AtExit(rmtemp)
 	}
 
 	// change our output to temporary object file
@@ -1056,11 +1056,55 @@ func archive() {
 	}
 }
 
+func uefilink() {
+	extld = "ld"
+
+	argv := []string{
+		extld,
+		"-nostdlib",
+		"--warn-common",
+		"--fatal-warnings",
+		"--no-undefined",
+		"-shared",
+		"-Bsymbolic",
+		"-T/home/dave/hack/efigo/efihacking/linkscript.lds",
+		"/lib64/crt0-efi-x86_64.o",
+		"-o", outfile,
+		"-L/lib64",
+	}
+	argv = append(argv, filepath.Join(tmpdir, "go.o"))
+	argv = append(argv, hostobjCopy()...)
+	argv = append(argv, "-lgnuefi")
+
+	if Debug['v'] != 0 {
+		fmt.Fprintf(Bso, "host link:")
+		for _, v := range argv {
+			fmt.Fprintf(Bso, " %q", v)
+		}
+		fmt.Fprintf(Bso, "\n")
+		Bso.Flush()
+	}
+
+	if out, err := exec.Command(argv[0], argv[1:]...).CombinedOutput(); err != nil {
+		Exitf("running %s failed: %v\n%s", argv[0], err, out)
+	} else if Debug['v'] != 0 && len(out) > 0 {
+		fmt.Fprintf(Bso, "%s", out)
+		Bso.Flush()
+	}
+}
+
 func hostlink() {
 	if Linkmode != LinkExternal || nerrors > 0 {
 		return
 	}
 	if Buildmode == BuildmodeCArchive {
+		return
+	}
+
+	if HEADTYPE == obj.Huefi {
+		// UEFI linking is fiddly enough that it bears no resemblance to
+		// other external linking, so keep it separate.
+		uefilink()
 		return
 	}
 
@@ -1078,18 +1122,21 @@ func hostlink() {
 		argv = append(argv, "-s")
 	}
 
-	if HEADTYPE == obj.Hdarwin {
+	switch HEADTYPE {
+	case obj.Hdarwin:
 		argv = append(argv, "-Wl,-no_pie,-headerpad,1144")
-	}
-	if HEADTYPE == obj.Hopenbsd {
+	case obj.Hopenbsd:
 		argv = append(argv, "-Wl,-nopie")
-	}
-	if HEADTYPE == obj.Hwindows {
+	case obj.Hwindows:
 		if headstring == "windowsgui" {
 			argv = append(argv, "-mwindows")
 		} else {
 			argv = append(argv, "-mconsole")
 		}
+	case obj.Huefi:
+		// TODO: look for the lds and crt0 in several plausible
+		// places, distros are inconsistent with install destination.
+		argv = append(argv, "-v", "-nostdlib", "-T/lib64/elf_x86_64_efi.lds", "/lib64/crt0-efi-x86_64.o")
 	}
 
 	switch Buildmode {
@@ -1170,6 +1217,12 @@ func hostlink() {
 	if goos == "windows" && runtime.GOOS == "windows" && filepath.Ext(outopt) == "" {
 		outopt += "."
 	}
+	if HEADTYPE == obj.Huefi {
+		// gnu-efi first produces an ELF using a custom linker script
+		// and crt0, which we must then translate to PE32+ using
+		// objcopy.
+		//outopt = filepath.Join(tmpdir, "efi_elf")
+	}
 	argv = append(argv, "-o")
 	argv = append(argv, outopt)
 
@@ -1188,6 +1241,9 @@ func hostlink() {
 
 	argv = append(argv, filepath.Join(tmpdir, "go.o"))
 	argv = append(argv, hostobjCopy()...)
+	if HEADTYPE == obj.Huefi {
+		argv = append(argv, "-lgnuefi")
+	}
 
 	if Linkshared {
 		seenDirs := make(map[string]bool)
@@ -1277,6 +1333,25 @@ func hostlink() {
 	} else if Debug['v'] != 0 && len(out) > 0 {
 		fmt.Fprintf(Bso, "%s", out)
 		Bso.Flush()
+	}
+
+	if HEADTYPE == obj.Huefi {
+		// argv = []string{"objcopy", "-j.text", "-j.sdata", "-j.data", "-j.dynamic", "-j.dynsym", "-j.rel", "-j.rela", "-j.reloc", "-S", "--target=efi-app-x86-64", outopt, outfile}
+		// if Debug['v'] != 0 {
+		// 	fmt.Fprintf(Bso, "host objcopy:")
+		// 	for _, v := range argv {
+		// 		fmt.Fprintf(Bso, " %q", v)
+		// 	}
+		// 	fmt.Fprintf(Bso, "\n")
+		// 	Bso.Flush()
+		// }
+
+		// if out, err := exec.Command(argv[0], argv[1:]...).CombinedOutput(); err != nil {
+		// 	Exitf("running objcopy failed: %v\n%s", err, out)
+		// } else if Debug['v'] != 0 && len(out) > 0 {
+		// 	fmt.Fprintf(Bso, "%s", out)
+		// 	Bso.Flush()
+		// }
 	}
 
 	if Debug['s'] == 0 && debug_s == 0 && HEADTYPE == obj.Hdarwin {

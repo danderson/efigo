@@ -9,7 +9,9 @@
 // Volatile regs: RAX, RCX, RDX, R8, R9, R10, R11, XMM0-5
 // Stack must be 16-byte aligned on CALL
 
-TEXT _rt0_amd64_uefi(SB),NOSPLIT,$-8
+//TEXT _rt0_amd64_uefi(SB),NOSPLIT,$-8
+TEXT efi_main(SB),NOSPLIT,$-8
+    HANG
     CLI
     MOVQ DX, _efi_services(SB)
     HANG

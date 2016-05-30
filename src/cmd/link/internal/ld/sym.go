@@ -52,9 +52,9 @@ var headers = []struct {
 	{"openbsd", obj.Hopenbsd},
 	{"plan9", obj.Hplan9},
 	{"solaris", obj.Hsolaris},
+	{"uefi", obj.Huefi},
 	{"windows", obj.Hwindows},
 	{"windowsgui", obj.Hwindows},
-	{"uefi", obj.Hwindows},
 }
 
 func linknew(arch *sys.Arch) *Link {
@@ -98,7 +98,8 @@ func linknew(arch *sys.Arch) *Link {
 		obj.Hnetbsd,
 		obj.Hopenbsd,
 		obj.Hdragonfly,
-		obj.Hsolaris:
+		obj.Hsolaris,
+		obj.Huefi:
 		if obj.Getgoos() == "android" {
 			switch ctxt.Arch.Family {
 			case sys.AMD64:

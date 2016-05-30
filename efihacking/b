@@ -2,11 +2,42 @@
 
 set -e
 
+bin() {
+    rm -f helloworld helloworld.dump
+    (
+        set -e
+        export GOROOT=`pwd`/..
+        export GOPATH=`pwd`
+        export PATH=`pwd`/../bin:$PATH
+        export GOOS=uefi
+        export GOARCH=amd64
+        go build -ldflags '-v' -x -v -work helloworld
+    ) || exit 1
+    mv helloworld helloworld.so
+    objcopy -j.text -j.sdata -j.data -j.dynamic -j.dynsym -j.rel -j.rela -j.reloc -S --target=efi-app-x86-64 helloworld.so helloworld
+    #
+    objdump -xD helloworld.so >helloworld.so.dump
+    objdump -xD helloworld >helloworld.dump
+}
+
+install() {
+        guestfish <<EOF
+add uefi.img
+run
+mount /dev/sda1 /
+upload $1 /EFI/BOOT/BOOTX64.EFI
+EOF
+}
+
+patch() {
+    go run patchentry.go $1
+}
+
 case $1 in
     toolchain)
         (
             cd ../src
-            GOOS=uefi GOROOT_BOOTSTRAP=$(go env GOROOT) ./make.bash
+            GOROOT_BOOTSTRAP=$(go env GOROOT) ./make.bash
         )
     ;;
     diskimg)
@@ -22,16 +53,17 @@ mkdir /EFI/BOOT
 EOF
     ;;
     bin)
-        rm -f helloworld helloworld.dump
-        GOROOT=`pwd`/.. GOPATH=`pwd` PATH=`pwd`/../bin:$PATH GOOS=uefi GOARCH=amd64 go build -v -ldflags '-H uefi -v' -x helloworld
-        objdump -xD helloworld >helloworld.dump
-        guestfish <<EOF
-add uefi.img
-run
-mount /dev/sda1 /
-upload helloworld /EFI/BOOT/BOOTX64.EFI
-EOF
-    ;;
+        bin
+        install ${2:-helloworld}
+        ;;
+    patch)
+        patch
+        ;;
+    bin-debug)
+        bin
+        patch ${2:-helloworld}
+        install ${2:-helloworld}
+        ;;
     qemu)
         qemu-system-x86_64 -s -bios /usr/share/ovmf/ovmf_x64.bin -drive file=uefi.img,if=ide,format=raw -monitor stdio
         ;;

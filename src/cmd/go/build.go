@@ -358,7 +358,7 @@ func buildModeInit() {
 		ldBuildmode = "c-shared"
 	case "default":
 		switch platform {
-		case "android/arm", "android/arm64", "android/amd64", "android/386":
+		case "android/arm", "android/arm64", "android/amd64", "android/386", "uefi/amd64":
 			codegenArg = "-shared"
 			ldBuildmode = "pie"
 		case "darwin/arm", "darwin/arm64":
@@ -376,7 +376,7 @@ func buildModeInit() {
 		} else {
 			switch platform {
 			case "linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le", "linux/s390x",
-				"android/amd64", "android/arm", "android/arm64", "android/386":
+				"android/amd64", "android/arm", "android/arm64", "android/386", "uefi/amd64":
 				codegenArg = "-shared"
 			default:
 				fatalf("-buildmode=pie not supported on %s\n", platform)

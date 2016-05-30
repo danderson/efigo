@@ -142,3 +142,6 @@ func osinit() {
 
 //go:nosplit
 func ok()
+
+//go:cgo_export_static efi_main
+func efi_main()

@@ -663,7 +663,8 @@ func asmb() {
 		obj.Hnetbsd,
 		obj.Hopenbsd,
 		obj.Hdragonfly,
-		obj.Hsolaris:
+		obj.Hsolaris,
+		obj.Huefi:
 		ld.Debug['8'] = 1 /* 64-bit addresses */
 
 	case obj.Hnacl,
@@ -695,7 +696,8 @@ func asmb() {
 			obj.Hopenbsd,
 			obj.Hdragonfly,
 			obj.Hsolaris,
-			obj.Hnacl:
+			obj.Hnacl,
+			obj.Huefi:
 			symo = int64(ld.Segdwarf.Fileoff + ld.Segdwarf.Filelen)
 			symo = ld.Rnd(symo, int64(ld.INITRND))
 
@@ -779,7 +781,8 @@ func asmb() {
 		obj.Hopenbsd,
 		obj.Hdragonfly,
 		obj.Hsolaris,
-		obj.Hnacl:
+		obj.Hnacl,
+		obj.Huefi:
 		ld.Asmbelf(symo)
 
 	case obj.Hwindows:

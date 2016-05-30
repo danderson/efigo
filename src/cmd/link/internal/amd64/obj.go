@@ -110,6 +110,7 @@ func archinit() {
 		obj.Hnetbsd,
 		obj.Hopenbsd,
 		obj.Hsolaris,
+		obj.Huefi,
 		obj.Hwindows:
 		break
 	}
@@ -150,7 +151,8 @@ func archinit() {
 		obj.Hnetbsd,    /* netbsd */
 		obj.Hopenbsd,   /* openbsd */
 		obj.Hdragonfly, /* dragonfly */
-		obj.Hsolaris:   /* solaris */
+		obj.Hsolaris,   /* solaris */
+		obj.Huefi:
 		ld.Elfinit()
 
 		ld.HEADR = ld.ELFRESERVE

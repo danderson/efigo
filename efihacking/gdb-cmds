@@ -10,9 +10,5 @@ define z
   end
 end
 
-define hook-stop
-x/8xg $rsp
-end
-
+display/8xg $rsp
 target remote localhost:1234
-z

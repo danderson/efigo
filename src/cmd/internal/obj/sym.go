@@ -53,9 +53,9 @@ var headers = []struct {
 	{"openbsd", Hopenbsd},
 	{"plan9", Hplan9},
 	{"solaris", Hsolaris},
+	{"uefi", Huefi},
 	{"windows", Hwindows},
 	{"windowsgui", Hwindows},
-	{"uefi", Hwindows},
 }
 
 func headtype(name string) int {
